@@ -31,8 +31,12 @@ jobs:
       # none, and there are none here: no game data goes near this repo.
       - run: pnpm test
       - run: pnpm run build
-      # enablement turns the Pages site on the first time this runs, so
-      # the repository needs nothing set by hand before its first deploy.
+      # enablement asks for the Pages site to be created if there is not
+      # one. Worth keeping for anyone forking this, but do not rely on
+      # it: GitHub would not let the workflow's own token create the
+      # site here ("Resource not accessible by integration"), so this
+      # repository's was made through the API instead. Once a site
+      # exists the step just reads it and this is inert.
       - uses: actions/configure-pages@v5
         with:
           enablement: true
