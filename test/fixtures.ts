@@ -7,6 +7,10 @@
 // holding disk1.adf .. disk4.adf (and optionally the matching .ipf
 // files) to run the tests that need them; without it they skip, so a
 // clone with no disks still passes.
+//
+// A `music/` subdirectory holding the .STM streams the port's own
+// tools/make-music.sh produced turns on the byte-comparison in
+// music.test.ts as well.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

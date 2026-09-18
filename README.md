@@ -42,10 +42,43 @@ Twenty files appear on more than one disk. On the original release every
 copy is identical, so one is kept and the rest are checked against it; a
 disk that disagrees is reported rather than quietly winning.
 
-The music is not converted. The ST plays a chip-music version of the
-score, built from the modules on these same disks by the port's
-`tools/make-music.sh`, and that chain has not been brought over here
-yet.
+And 21 music tracks, in a `MUSIC` folder beside it.
+
+## The music
+
+The Amiga score is sampled music, which a plain ST cannot play: there is
+no DMA sound on one and this port has no software mixer. Every ST does
+have the YM2149, so each ProTracker module on the disks is converted
+here into a YM register stream, the same way the port's own
+`tools/make-music.sh` does it offline:
+
+```
+MOD  ->  Standard MIDI File  ->  STM
+     mod2midi.ts          midi2stm.ts
+```
+
+Expect a chip cover rather than a reproduction. The waveforms and the
+volume envelopes have nowhere to go on three square waves and a noise
+generator, so what survives is the notes.
+
+Two things in there are judgement calls rather than conversions. One MOD
+channel is marked as percussion when its samples are short, unlooped and
+played over a narrow range of notes, because with only three voices a
+kick drum competing with the melody is a poor trade. And a module that
+jumps backwards through its order table is saying "loop", so conversion
+stops at the first revisited position and the player repeats the track -
+following the jump instead rendered three cues as 22-minute files.
+
+Each track is named from the module's own 20-byte title rather than its
+filename. The filename is the engine's primary track name, but the port
+looks up the alternate one, and the alternate is what the title holds.
+Where a name will not fit in 8.3 the LAST character is kept rather than
+truncating: `teleporta` and `teleport2` differ only there and would
+otherwise both become `TELEPORT`.
+
+Both legs are ports of the Python in the ST repository, and the tests
+check them against it: every one of the 21 tracks comes out byte for
+byte identical to what `mod2smf.py` and `stdlconv.py` produce.
 
 ## How it decides a disk is the right one
 
@@ -89,8 +122,10 @@ REXTRACT_FIXTURES=/path/to/disks pnpm test
 ```
 
 The directory holds `disk1.adf` .. `disk4.adf`, and optionally
-`disk1.ipf` .. `disk4.ipf`. Without it those tests skip themselves, so a
-fresh clone still passes. Keep that directory outside this repository.
+`disk1.ipf` .. `disk4.ipf`. A `music/` subdirectory holding the `.STM`
+files the port's own `tools/make-music.sh` produced turns on the
+byte-comparison against the Python chain. Without any of it those tests
+skip themselves, so a fresh clone still passes. Keep that directory outside this repository.
 
 If you have both, the IPF tests compare what this decoder produces
 against the ADFs beside it, file by file. Producing those ADFs with
@@ -128,8 +163,10 @@ the dropped file
       v
   dataset.ts       which files, what they are called, which disk this is
       |
+      +-- music.ts        the score: mod2midi.ts -> midi2stm.ts
+      |
       v
-  zip.ts           DATA/, deflated
+  zip.ts           DATA/ and MUSIC/, deflated
 ```
 
 Each disk is read in its own worker, so four of them decode at once and
@@ -154,7 +191,7 @@ decode is a warning and the rest of the disk carries on, and any file
 that needed the missing sectors says so by name. If you meet one,
 the track number in the warning is the thing to report.
 
-DMS is not supported, and neither is the music conversion.
+DMS is not supported: unpack one to an ADF first.
 
 ## Licensing
 

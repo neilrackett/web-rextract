@@ -14,6 +14,7 @@
 import { crc32 } from './crc32';
 import { KNOWN_DISKS, REQUIRED_FILES, type KnownDisk } from './manifest';
 import type { AmigaFile, AmigaVolume } from './amigados';
+import type { MusicTrack } from './music';
 
 /**
  * REPLICANT.SPM is eight characters plus one. GEMDOS would truncate it
@@ -157,9 +158,11 @@ export interface DiskContribution {
  * means a disk that disagrees is reported rather than silently winning
  * because it happened to be dropped last.
  */
-export function buildDataSet(disks: DiskContribution[], required: string[] = REQUIRED_FILES): DataSet {
-	const chosen = new Map<string, ExtractedFile>();
-	const conflicts = new Set<string>();
+function dedupe<T extends { out: string; bytes: Uint8Array }>(
+	disks: { label: number; files: T[] }[],
+	conflicts: Set<string>,
+): (T & { fromDisk: number })[] {
+	const chosen = new Map<string, T & { fromDisk: number }>();
 	for (const { label, files } of disks) {
 		for (const file of files) {
 			const have = chosen.get(file.out);
@@ -170,12 +173,33 @@ export function buildDataSet(disks: DiskContribution[], required: string[] = REQ
 			}
 		}
 	}
-	const files = [...chosen.values()].sort((a, b) => (a.out < b.out ? -1 : 1));
+	return [...chosen.values()].sort((a, b) => (a.out < b.out ? -1 : 1));
+}
+
+export function buildDataSet(disks: DiskContribution[], required: string[] = REQUIRED_FILES): DataSet {
+	const conflicts = new Set<string>();
+	const files = dedupe(disks, conflicts);
+	const have = new Set(files.map((f) => f.out));
 	return {
 		files,
-		missing: required.filter((name) => !chosen.has(name)),
+		missing: required.filter((name) => !have.has(name)),
 		conflicts: [...conflicts].sort(),
 		unsafeNames: files.map((f) => f.out).filter((n) => !isGemdosName(n)),
 		totalBytes: files.reduce((n, f) => n + f.bytes.length, 0),
 	};
+}
+
+export interface MusicSet {
+	tracks: (MusicTrack & { fromDisk: number })[];
+	conflicts: string[];
+}
+
+/**
+ * The score is spread over the four disks the same way the cinematics
+ * are, with four tracks carried on more than one of them, so it is
+ * deduplicated exactly like the data files.
+ */
+export function buildMusicSet(disks: { label: number; files: MusicTrack[] }[]): MusicSet {
+	const conflicts = new Set<string>();
+	return { tracks: dedupe(disks, conflicts), conflicts: [...conflicts].sort() };
 }

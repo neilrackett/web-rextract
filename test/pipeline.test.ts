@@ -7,9 +7,11 @@
 
 import { describe, expect, it } from 'vitest';
 import { crc32 } from '../src/core/crc32';
-import { buildDataSet } from '../src/core/dataset';
+import { buildDataSet, buildMusicSet } from '../src/core/dataset';
+import { convertTrack } from '../src/core/music';
 import { KNOWN_DISKS, REQUIRED_FILES } from '../src/core/manifest';
 import { examine } from '../src/core/pipeline';
+import { unzipSync } from 'fflate';
 import { buildZip } from '../src/core/zip';
 import { fixture, haveFixture } from './fixtures';
 
@@ -47,16 +49,28 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		}
 	});
 
-	it('writes a zip with one DATA folder in it', async () => {
-		const disks = await Promise.all(
-			DISKS.map(async (n) => ({ label: n, files: (await examine(`disk${n}.adf`, fixture(`disk${n}.adf`))).files })),
+	it('writes a zip holding DATA and MUSIC', async () => {
+		const read = await Promise.all(DISKS.map((n) => examine(`disk${n}.adf`, fixture(`disk${n}.adf`))));
+		const data = buildDataSet(read.map((r, i) => ({ label: i + 1, files: r.files })));
+		const music = buildMusicSet(read.map((r, i) => ({ label: i + 1, files: r.music })));
+		const zip = buildZip(
+			data.files,
+			music.tracks.map((t) => ({ out: t.out, bytes: convertTrack(t.bytes) })),
 		);
-		const zip = buildZip(buildDataSet(disks).files);
 		expect(zip.length).toBeGreaterThan(1_000_000);
 		// PK\003\004, then the first entry's name.
 		expect([...zip.subarray(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
 		expect(new TextDecoder().decode(zip.subarray(30, 35))).toBe('DATA/');
-	});
+
+		// Unpacked again, the archive has to hold both folders in full:
+		// this is the whole job, end to end, in one assertion.
+		const back = unzipSync(zip);
+		const names = Object.keys(back);
+		expect(names.filter((n) => n.startsWith('DATA/')).length).toBe(REQUIRED_FILES.length);
+		expect(names.filter((n) => n.startsWith('MUSIC/')).length).toBe(21);
+		expect(names.filter((n) => !n.startsWith('DATA/') && !n.startsWith('MUSIC/'))).toEqual([]);
+		expect(back['MUSIC/JUNGLE.STM'].subarray(0, 4)).toEqual(new Uint8Array([0x53, 0x54, 0x4d, 0x31]));
+	}, 30_000);
 });
 
 describe.skipIf(!haveFixture('disk1.ipf'))('from IPFs', () => {

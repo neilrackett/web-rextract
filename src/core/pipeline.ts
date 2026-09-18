@@ -8,6 +8,7 @@
 
 import { readVolume, type Filesystem } from './amigados';
 import { identifyDisk, selectFiles, type Identification, type SelectedFile } from './dataset';
+import { selectModules, type MusicTrack } from './music';
 import type { ImageFormat } from './image';
 import { readImage } from './read';
 
@@ -18,6 +19,9 @@ export interface DiskResult {
 	filesystem: Filesystem;
 	identification: Identification;
 	files: SelectedFile[];
+	/** The score, still as ProTracker modules - converting is cheap and
+	 *  happens once at the end rather than four times over here. */
+	music: MusicTrack[];
 	/** Anything odd about the image or the filesystem, in plain words. */
 	warnings: string[];
 }
@@ -38,6 +42,7 @@ export async function examine(fileName: string, data: Uint8Array): Promise<DiskR
 		filesystem: volume.filesystem,
 		identification: identifyDisk(volume),
 		files: selectFiles(volume),
+		music: selectModules(volume),
 		warnings,
 	};
 }

@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import './main.css';
-import { buildDataSet, type DataSet } from './core/dataset';
+import { buildDataSet, buildMusicSet, type DataSet } from './core/dataset';
+import { convertTrack } from './core/music';
 import type { DiskResult } from './core/pipeline';
-import { buildZip } from './core/zip';
+import { buildZip, type ZipStream } from './core/zip';
 import type { ExamineRequest, ExamineResponse } from './worker';
 
 const DISK_COUNT = 4;
@@ -28,6 +29,7 @@ const slots: Slot[] = Array.from({ length: DISK_COUNT }, () => ({ kind: 'empty' 
 let pending: Pending[] = [];
 let rejected: Rejected[] = [];
 let dataSet: DataSet | null = null;
+let music: ZipStream[] = [];
 let nextId = 1;
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -149,7 +151,9 @@ function slotRow(n: number, slot: Slot): string {
 	}
 	const { result } = slot;
 	const id = result.identification;
-	const detail = `${result.volumeName} &middot; ${result.format.toUpperCase()} &middot; ${result.files.length} files`;
+	const detail =
+		`${result.volumeName} &middot; ${result.format.toUpperCase()} &middot; ${result.files.length} files` +
+		(result.music.length > 0 ? ` &middot; ${result.music.length} tracks` : '');
 	if (id.altered.length > 0) {
 		return row(
 			n,
@@ -212,6 +216,33 @@ function extract(): void {
 
 	dataSet = buildDataSet(contributions);
 	const notes: string[] = [];
+
+	// The score is converted here rather than when each disk arrives:
+	// four of the tracks are carried on more than one disk, and the
+	// whole set takes a few tens of milliseconds, so there is nothing
+	// to gain by doing it earlier or four times over.
+	const musicSet = buildMusicSet(
+		slots
+			.map((slot, i) => (slot.kind === 'ready' ? { label: i + 1, files: slot.result.music } : null))
+			.filter((c): c is { label: number; files: DiskResult['music'] } => c !== null),
+	);
+	music = [];
+	const musicFailed: string[] = [];
+	for (const track of musicSet.tracks) {
+		try {
+			music.push({ out: track.out, bytes: convertTrack(track.bytes) });
+		} catch (e) {
+			// One module that will not convert should not cost the
+			// player the other twenty.
+			musicFailed.push(`${track.out} (${(e as Error).message})`);
+		}
+	}
+	if (musicFailed.length > 0) {
+		notes.push(
+			'<p class="bad">These tracks could not be converted, and the game will be quiet where ' +
+			`they would have played:</p><ul>${musicFailed.map((n) => `<li>${n}</li>`).join('')}</ul>`,
+		);
+	}
 	if (dataSet.missing.length > 0) {
 		notes.push(
 			`<p class="bad">${dataSet.missing.length} file(s) the game needs are on none of these disks:</p>` +
@@ -232,19 +263,20 @@ function extract(): void {
 		);
 	}
 
-	const kb = Math.round(dataSet.totalBytes / 1024);
+	const kb = Math.round((dataSet.totalBytes + music.reduce((n, t) => n + t.bytes.length, 0)) / 1024);
 	notes.unshift(
-		`<p><strong>${dataSet.files.length} files, ${kb.toLocaleString()}KB.</strong> ` +
-		'Unzip it next to <code>FLASHBAK.TOS</code>, so that the game has a ' +
-		'<code>DATA</code> folder beside it.</p>',
+		`<p><strong>${dataSet.files.length} files and ${music.length} music tracks, ` +
+		`${kb.toLocaleString()}KB.</p>` +
+		`<p>Unzip it so that <code>FLASHBAK.TOS</code> and the <code>DATA</code> and <code>MUSIC</code> 
+		folders are all in the same folder on your hard disk and you're ready to go!</p>`,
 	);
 	messages.innerHTML = notes.join('');
 
-	const zip = buildZip(dataSet.files);
+	const zip = buildZip(dataSet.files, music);
 	const url = URL.createObjectURL(new Blob([zip as BlobPart], { type: 'application/zip' }));
 	const a = document.createElement('a');
 	a.href = url;
-	a.download = 'DATA.zip';
+	a.download = 'FLASHBACK-DATA.zip';
 	a.click();
 	URL.revokeObjectURL(url);
 	render();
@@ -264,16 +296,24 @@ async function saveToFolder(): Promise<void> {
 		const picked = await (window as unknown as {
 			showDirectoryPicker(options?: { mode?: string }): Promise<FileSystemDirectoryHandle>;
 		}).showDirectoryPicker({ mode: 'readwrite' });
-		const dir = await picked.getDirectoryHandle('DATA', { create: true });
 		let written = 0;
-		for (const file of dataSet.files) {
-			const handle = await dir.getFileHandle(file.out, { create: true });
-			const stream = await handle.createWritable();
-			await stream.write(file.bytes as BufferSource);
-			await stream.close();
-			written++;
-		}
-		messages.innerHTML = `<p><strong>${written} files written to DATA in the folder you chose.</strong></p>`;
+		const put = async (folder: string, files: { out: string; bytes: Uint8Array }[]) => {
+			if (files.length === 0) {
+				return;
+			}
+			const dir = await picked.getDirectoryHandle(folder, { create: true });
+			for (const file of files) {
+				const handle = await dir.getFileHandle(file.out, { create: true });
+				const stream = await handle.createWritable();
+				await stream.write(file.bytes as BufferSource);
+				await stream.close();
+				written++;
+			}
+		};
+		await put('DATA', dataSet.files);
+		await put('MUSIC', music);
+		messages.innerHTML =
+			`<p><strong>${written} files written to DATA and MUSIC in the folder you chose.</strong></p>`;
 	} catch (e) {
 		const err = e as Error;
 		if (err.name !== 'AbortError') {
@@ -289,6 +329,7 @@ function reset(): void {
 	pending = [];
 	rejected = [];
 	dataSet = null;
+	music = [];
 	picker.value = '';
 	messages.innerHTML = '';
 	render();

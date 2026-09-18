@@ -28,9 +28,11 @@ self.onmessage = async (event: MessageEvent<ExamineRequest>) => {
 		const result = await examine(fileName, new Uint8Array(data));
 		const response: ExamineResponse = { id, ok: true, result };
 		// The file bytes are handed over rather than copied: there are a
-		// few megabytes of them and this side is finished with them.
+		// few megabytes of them and this side is finished with them. The
+		// modules are separate allocations from the data files - nothing
+		// is in both lists - so the two can be concatenated safely.
 		self.postMessage(response, {
-			transfer: result.files.map((f) => f.bytes.buffer as ArrayBuffer),
+			transfer: [...result.files, ...result.music].map((f) => f.bytes.buffer as ArrayBuffer),
 		});
 	} catch (e) {
 		const response: ExamineResponse = { id, ok: false, error: (e as Error).message };
