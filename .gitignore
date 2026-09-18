@@ -1,0 +1,14 @@
+node_modules
+dist
+*.local
+.DS_Store
+
+# Disk images and anything extracted from them. Nothing off somebody's
+# Flashback disks belongs in this repository - not a test fixture, not a
+# sample, not one file.
+*.adf
+*.adz
+*.ipf
+*.dms
+DATA/
+disks/

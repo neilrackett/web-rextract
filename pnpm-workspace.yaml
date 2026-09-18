@@ -1,0 +1,5 @@
+# pnpm holds a dependency's install script until it is allowed here.
+# esbuild's fetches the platform binary Vite uses, so without this the
+# install stops and nothing will run.
+allowBuilds:
+  esbuild: true

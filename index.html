@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>RExtract | Flashback data extractor for the Atari ST</title>
+	<meta name="description" content="Turn your Amiga Flashback disks into the DATA folder the Atari ST port needs. Runs entirely in your browser." />
+	<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#14181d" media="(prefers-color-scheme: dark)" />
+	<script>
+		// Runs before the first paint: a reader who chose dark should not
+		// be shown a white page on the way in. Wrapped because a browser
+		// with site data blocked throws on the read rather than returning
+		// nothing, and the page must still come up.
+		try {
+			const choice = localStorage.getItem('rextract-theme');
+			if (choice === 'dark' || choice === 'light') {
+				document.documentElement.dataset.theme = choice;
+			}
+		} catch { }
+	</script>
+</head>
+
+<body>
+	<main>
+		<header>
+			<h1>RExtract</h1>
+			<button type="button" id="theme">Theme: system</button>
+			<p class="tagline">
+				Welcome to RExtract, the data extraction tool for REminiscence on
+				the Atari ST (aka Flashback). Drop your four Amiga installations below,
+				extract the data and put the resulting DATA file next to FLASHBAK.TOS
+			</p>
+		</header>
+
+		<section id="drop" class="drop" tabindex="0" aria-label="Add disk images">
+			<p class="drop-main">Drop the four disk images here</p>
+			<p class="drop-sub">
+				<button type="button" id="choose" class="link">or click here to upload them</button>
+			</p>
+			<p class="drop-format">
+				Disk images must be .ipf, .adf or .adz format
+			</p>
+			<input type="file" id="picker" multiple accept=".ipf,.adf,.adz,.gz" hidden />
+		</section>
+
+		<ul id="slots" class="slots"></ul>
+
+		<div id="messages" class="messages" role="status" aria-live="polite"></div>
+
+		<section class="actions">
+			<button type="button" id="extract" disabled>Extract the data</button>
+			<button type="button" id="save" hidden>Save to a folder&hellip;</button>
+			<button type="button" id="reset" class="link" hidden>Start again</button>
+		</section>
+
+		<section class="notes">
+			<h2>What this does</h2>
+			<p>
+				The Atari ST port of Flashback plays the Amiga game's own data files. This reads
+				them off your disk images, renames them the way the ST's filesystem needs, and
+				gives you back a <code>DATA</code> folder to put beside
+				<code>FLASHBAK.TOS</code>.
+			</p>
+			<p>
+				<strong>Everything happens in this browser.</strong> Your disk images are never
+				uploaded, and there is nothing here to upload them to: the page is a static file
+				and the work is done by the tab you are looking at. You need your own copy of the
+				Amiga release &mdash; this supplies no game data and never will.
+			</p>
+		</section>
+
+		<footer>
+			<p>
+				<a href="https://github.com/neilrackett/atarist-reminiscence">The Atari ST port</a>
+				&middot;
+				<a href="https://github.com/neilrackett/web-rextract">Source for this page</a>
+			</p>
+			<p class="small">
+				IPF decoding is derived from MAME's <code>ipf_dsk.cpp</code> by Olivier Galibert,
+				BSD-3-Clause.
+			</p>
+		</footer>
+	</main>
+	<script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
