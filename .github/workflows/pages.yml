@@ -31,7 +31,11 @@ jobs:
       # none, and there are none here: no game data goes near this repo.
       - run: pnpm test
       - run: pnpm run build
+      # enablement turns the Pages site on the first time this runs, so
+      # the repository needs nothing set by hand before its first deploy.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
