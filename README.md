@@ -1,5 +1,10 @@
 # RExtract
 
+The data extraction tool for Flashback on the Atari ST (REminiscence),
+by [Neil Rackett](https://neilrackett.com/atarist).
+
+## Introduction
+
 A web app that extracts the data from your Amiga Flashback installation
 disks into the `DATA` folder the [Atari ST port of REminscence](https://github.com/neilrackett atarist-reminiscence)
 needs.
@@ -13,8 +18,8 @@ rather not meet a terminal.
 tab you have open and go nowhere else: there is no upload, no server and
 nothing to send them to. The page is a static file on GitHub Pages.
 
-You need your own copy of the Amiga release. This supplies no game data,
-and neither does this repository - not a test fixture, not a sample
+You need your own copy of the Amiga installation disks. This supplies no
+game data, and neither does this repository - not a test fixture, not a sample
 disk, not one file.
 
 ## What it reads
