@@ -158,7 +158,7 @@ DMS is not supported, and neither is the music conversion.
 
 ## Licensing
 
-MIT, except `src/core/ipf.ts`, which is derived from MAME's
+BSD-2-Clause, except `src/core/ipf.ts`, which is derived from MAME's
 `src/lib/formats/ipf_dsk.cpp` by Olivier Galibert and keeps its own
 licence, BSD-3-Clause. The file carries the notice.
 

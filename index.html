@@ -5,7 +5,7 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>RExtract | Flashback data extractor for the Atari ST</title>
-	<meta name="description" content="Turn your Amiga Flashback disks into the DATA folder the Atari ST port needs. Runs entirely in your browser." />
+	<meta name="description" content="RExtract: the data extraction tool for Flashback on the Atari ST (REminiscence)" />
 	<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,10 +13,6 @@
 	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 	<meta name="theme-color" content="#14181d" media="(prefers-color-scheme: dark)" />
 	<script>
-		// Runs before the first paint: a reader who chose dark should not
-		// be shown a white page on the way in. Wrapped because a browser
-		// with site data blocked throws on the read rather than returning
-		// nothing, and the page must still come up.
 		try {
 			const choice = localStorage.getItem('rextract-theme');
 			if (choice === 'dark' || choice === 'light') {
@@ -30,18 +26,29 @@
 	<main>
 		<header>
 			<h1>RExtract</h1>
-			<button type="button" id="theme">Theme: system</button>
-			<p class="tagline">
-				Welcome to RExtract, the data extraction tool for REminiscence on
-				the Atari ST (aka Flashback). Drop your four Amiga installations below,
-				extract the data and put the resulting DATA file next to FLASHBAK.TOS
-			</p>
+			<button type="button" id="theme">system</button>
+			<div class="tagline">
+				<p>
+					Welcome to RExtract, the data extraction tool for Flashback on
+					the Atari ST (REminiscence).
+				</p>
+				<p>
+					Drop your four Amiga Flashback installation disk images below to
+					extract the data, give everything ST-friendly 8.3 filenames and put
+					it all in a <code>DATA</code> folder you can copy next to
+					<code>FLASHBAK.TOS</code>; it does not currently extract and convert
+					the music files.
+				</p>
+				<p>
+					Everything happens in this browser. Your disk images are never uploaded.
+				</p>
+			</div>
 		</header>
 
 		<section id="drop" class="drop" tabindex="0" aria-label="Add disk images">
-			<p class="drop-main">Drop the four disk images here</p>
+			<p class="drop-main">Drop your four disk images here</p>
 			<p class="drop-sub">
-				<button type="button" id="choose" class="link">or click here to upload them</button>
+				<button type="button" id="choose" class="link">or click here to add them</button>
 			</p>
 			<p class="drop-format">
 				Disk images must be .ipf, .adf or .adz format
@@ -59,31 +66,16 @@
 			<button type="button" id="reset" class="link" hidden>Start again</button>
 		</section>
 
-		<section class="notes">
-			<h2>What this does</h2>
-			<p>
-				The Atari ST port of Flashback plays the Amiga game's own data files. This reads
-				them off your disk images, renames them the way the ST's filesystem needs, and
-				gives you back a <code>DATA</code> folder to put beside
-				<code>FLASHBAK.TOS</code>.
-			</p>
-			<p>
-				<strong>Everything happens in this browser.</strong> Your disk images are never
-				uploaded, and there is nothing here to upload them to: the page is a static file
-				and the work is done by the tab you are looking at. You need your own copy of the
-				Amiga release &mdash; this supplies no game data and never will.
-			</p>
-		</section>
-
 		<footer>
 			<p>
-				<a href="https://github.com/neilrackett/atarist-reminiscence">The Atari ST port</a>
-				&middot;
-				<a href="https://github.com/neilrackett/web-rextract">Source for this page</a>
-			</p>
-			<p class="small">
 				IPF decoding is derived from MAME's <code>ipf_dsk.cpp</code> by Olivier Galibert,
 				BSD-3-Clause.
+			</p>
+			<p>
+				Flashback for Atari ST is available from <a href="https://neilrackett.com/atarist">neilrackett.com/atarist</a>
+			</p>
+			<p>
+				<a href="https://github.com/neilrackett/web-rextract">Source for this page</a> is on GitHub
 			</p>
 		</footer>
 	</main>

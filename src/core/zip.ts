@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-2-Clause
 //
 // The download: a zip holding one DATA folder.
 //

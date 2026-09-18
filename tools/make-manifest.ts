@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-2-Clause
 //
 // Regenerate src/core/manifest.ts from a set of original disk images.
 //
@@ -54,7 +54,7 @@ const disks = await Promise.all(names.map(async (name, i) => {
 
 const out = `// RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-2-Clause
 //
 // The four Flashback Amiga disks, by name, size and checksum.
 //

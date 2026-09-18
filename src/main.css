@@ -1,6 +1,3 @@
-/* Deliberately plain: this page has one job and the job is legible on a
-   phone, on a laptop, and in either colour scheme. */
-
 :root {
 	--bg: #ffffff;
 	--fg: #1b1f24;
@@ -13,12 +10,6 @@
 	--bad: #b42318;
 	color-scheme: light;
 }
-
-/* The dark values are written twice on purpose: once for a machine set
-   that way, and once for a reader who has overruled it with the button
-   in the header. CSS has no way to share one block between a media
-   query and an attribute selector, so the two are kept adjacent and
-   changed together. */
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
@@ -64,6 +55,10 @@ body {
 }
 
 main {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
 	max-width: 44rem;
 	margin: 0 auto;
 	padding: 2.5rem 1rem 4rem;
@@ -73,32 +68,22 @@ header {
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
-	/* Tight between the title and the tagline below it, roomy between
-	   the title and the theme button beside it. */
-	gap: 0.25rem 1rem;
+	gap: 0 1rem;
 	flex-wrap: wrap;
 }
 
 h1 {
-	font-size: 2rem;
-	font-weight: 400;
+	font-size: 3rem;
+	font-weight: 300;
 	margin: 0 0 0.25rem;
 	letter-spacing: -0.01em;
 }
 
-h2 {
-	font-size: 1.05rem;
-	font-weight: 400;
-	margin: 2.5rem 0 0.5rem;
-}
-
 .tagline {
-	/* Full width, so the title and the theme button share the row
-	   above it rather than being squeezed alongside. */
 	flex-basis: 100%;
 	margin: 0;
 	color: var(--muted);
-	max-width: 34rem;
+	max-width: 39rem;
 }
 
 a {
@@ -112,8 +97,6 @@ code {
 	padding: 0.1em 0.35em;
 	border-radius: 3px;
 }
-
-/* --- the drop zone ------------------------------------------------ */
 
 .drop {
 	margin: 2rem 0 1.5rem;
@@ -149,8 +132,6 @@ code {
 	font-size: 0.75rem;
 }
 
-/* --- disk slots --------------------------------------------------- */
-
 .slots {
 	list-style: none;
 	margin: 0 0 1.5rem;
@@ -162,15 +143,9 @@ code {
 .slot {
 	display: grid;
 	grid-template-columns: 2.5rem 1fr auto;
-	/* Centred rather than sharing a baseline with the first line: with
-	   a name and a detail line stacked in the middle column, a baseline
-	   would leave the number and the state clinging to the top of the
-	   box while an empty slot had them in the middle. */
 	align-items: center;
 	gap: 0.75rem;
 	padding: 0.7rem 0.9rem;
-	/* Named once, because the empty-slot spacer below has to be sized
-	   in exactly the same text as the detail line it stands in for. */
 	--detail-size: 0.85rem;
 	border: 1px solid var(--line);
 	border-radius: 8px;
@@ -194,12 +169,6 @@ code {
 	font-size: var(--detail-size);
 }
 
-/* A slot with nothing in it yet has no second line, so it borrows one:
-   half a detail-sized line above the text and half below. The box comes
-   out exactly as tall as a filled one, because the halves are measured
-   in the detail line's own text rather than in numbers that would have
-   to be kept in step by hand - and the single line sits in the middle
-   of the box rather than hugging the top. */
 .slot .name:not(:has(.detail))::before,
 .slot .name:not(:has(.detail))::after {
 	content: '';
@@ -231,8 +200,6 @@ code {
 	color: var(--muted);
 }
 
-/* --- messages ----------------------------------------------------- */
-
 .messages:not(:empty) {
 	margin: 0 0 1.5rem;
 	padding: 0.85rem 1rem;
@@ -260,9 +227,8 @@ code {
 	color: var(--muted);
 }
 
-/* --- actions ------------------------------------------------------ */
-
 .actions {
+	margin-bottom: auto;
 	display: flex;
 	gap: 0.75rem;
 	align-items: center;
@@ -280,9 +246,6 @@ button {
 	cursor: pointer;
 }
 
-/* Not just faded: accent blue at low opacity is hard to read on a dark
-   background, so a disabled button drops out of the accent colour
-   altogether. */
 button:disabled {
 	background: var(--panel);
 	color: var(--muted);
@@ -290,10 +253,11 @@ button:disabled {
 	cursor: default;
 }
 
-/* Quiet, and well out of the way of the one button that matters. */
 #theme {
 	flex: none;
-	min-width: 8.5rem;
+	align-self: center;
+	margin-bottom: 0.25rem;
+	min-width: 4rem;
 	background: none;
 	color: var(--muted);
 	border: 1px solid var(--line);
@@ -323,29 +287,14 @@ button.link {
 	border-color: var(--line);
 }
 
-/* --- notes -------------------------------------------------------- */
-
-.notes p {
-	color: var(--muted);
-	max-width: 36rem;
-}
-
-.notes strong {
-	color: var(--fg);
-}
-
 footer {
 	margin-top: 3rem;
 	padding-top: 1.25rem;
 	border-top: 1px solid var(--line);
-	font-size: 0.9rem;
+	font-size: 0.75rem;
 	color: var(--muted);
 }
 
 footer p {
-	margin: 0 0 0.3rem;
-}
-
-.small {
-	font-size: 0.82rem;
+	margin: 0.1rem 0 0 0;
 }

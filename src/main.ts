@@ -1,10 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: MIT
-//
-// The page. State is four disk slots and a list of things that did not
-// fit in one, and every change re-renders both - there is not enough
-// here to justify anything cleverer.
+// SPDX-License-Identifier: BSD-2-Clause
 
 import './main.css';
 import { buildDataSet, type DataSet } from './core/dataset';
@@ -78,7 +74,7 @@ function applyTheme(next: Theme): void {
 	} else {
 		document.documentElement.dataset.theme = next;
 	}
-	themeButton.textContent = `Theme: ${next}`;
+	themeButton.textContent = `${next}`;
 	themeButton.setAttribute('aria-label', `Colour theme: ${next}. Press to change it.`);
 	try {
 		if (next === 'system') {

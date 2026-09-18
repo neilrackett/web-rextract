@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-2-Clause
 //
 // End to end, against real disks. These are the tests that need
 // REXTRACT_FIXTURES; see test/fixtures.ts.

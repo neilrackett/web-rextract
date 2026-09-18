@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-2-Clause
 //
 // Reading a disk is a second or two of solid arithmetic - decoding an
 // IPF's 160 tracks, mostly - so it happens here rather than on the
