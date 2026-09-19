@@ -5,6 +5,11 @@
 // Copyright (c) Olivier Galibert
 // Copyright (c) 2026 Neil Rackett
 //
+// This one file is NOT under the project's GPL-3.0-or-later. It keeps
+// MAME's licence, which is compatible with the GPL and so can be
+// combined into this program - but its own terms travel with it, and
+// it cannot be relicensed.
+//
 // MAME decodes an IPF into a flux-level track in which every MFM cell
 // carries both a level and a duration, because the result feeds an
 // emulated floppy controller that cares how long each cell lasts. All

@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // A read-only AmigaDOS walk: OFS and FFS, files and directories, no
 // writing and no cache blocks.

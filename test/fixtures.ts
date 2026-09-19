@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Test fixtures are real Flashback disk images, which are not in this
 // repository and never will be. Point REXTRACT_FIXTURES at a directory

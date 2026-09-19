@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Which files the Atari ST port wants, what they are called when they
 // get there, and which of the four disks a given image actually is.

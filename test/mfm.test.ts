@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The MFM decoder, tested against sectors this file encodes itself.
 // Nothing here comes off anybody's disk: the payload is a pattern, and

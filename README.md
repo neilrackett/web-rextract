@@ -200,9 +200,23 @@ DMS is not supported: unpack one to an ADF first.
 
 ## Licensing
 
-BSD-2-Clause, except `src/core/ipf.ts`, which is derived from MAME's
+GPL-3.0-or-later, except `src/core/ipf.ts`, which is derived from MAME's
 `src/lib/formats/ipf_dsk.cpp` by Olivier Galibert and keeps its own
-licence, BSD-3-Clause. The file carries the notice.
+licence, BSD-3-Clause. The file carries the notice. BSD-3-Clause is
+compatible with the GPL, so it combines into this program freely - but
+its own terms travel with it and it cannot be relicensed.
+
+Note what that means for a page rather than a program you install: the
+whole of this is delivered to every visitor's browser, so each visit is
+a distribution, and the built JavaScript is minified. The offer of
+Corresponding Source is the repository link in the page's footer. Keep
+it there.
+
+Two files are ports of Python from the sibling projects, and both are
+noted as such in their headers. `mod2midi.ts` comes from
+`tools/mod2smf.py` in the Atari ST port. `midi2stm.ts` comes from
+`stdlconv.py` in STDL, which is LGPL-2.1-or-later by the same author and
+is relicensed here rather than carried under its original terms.
 
 The SPS decoder library that usually reads IPFs is deliberately not
 used: its licence restricts it to non-commercial use, which makes it

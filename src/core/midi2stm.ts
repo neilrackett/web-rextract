@@ -1,6 +1,6 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The second leg of the chip-music chain: a Standard MIDI File in, a
 // YM2149 register stream out.
@@ -13,8 +13,10 @@
 // chip registers, and the stream is those frames with only the bytes
 // that changed.
 //
-// Ported from stdlconv.py's `midi` command in STDL, and it has to
-// agree with it byte for byte: the same modules are converted by the
+// Ported from stdlconv.py's `midi` command in STDL, which is the same
+// author's work under LGPL-2.1-or-later and is therefore relicensed
+// here rather than copied under its original terms. It has to agree
+// with that Python byte for byte: the same modules are converted by the
 // command-line tools in the port's own repository, and two versions of
 // a track that differ would be a puzzle nobody needs.
 

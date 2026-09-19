@@ -1,8 +1,12 @@
 // RExtract - Flashback data extractor for the Atari ST
 // Copyright (c) 2026 Neil Rackett
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // ProTracker module to Standard MIDI File.
+//
+// Ported from tools/mod2smf.py in the Atari ST port, so the two stay
+// in step: the same module converted by either route gives the same
+// music.
 //
 // The Atari ST has no sampled music: the YM2149 gives three square
 // wave voices and one noise generator, so the Amiga's four channels
