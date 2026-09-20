@@ -42,6 +42,7 @@
 * {
 	box-sizing: border-box;
 	font-weight: 300;
+	text-wrap: pretty;
 }
 
 body {
@@ -51,6 +52,7 @@ body {
 	color: var(--fg);
 	font-family: 'Open Sans', system-ui, sans-serif;
 	font-size: 14px;
+	font-weight: 300;
 	line-height: 1.55;
 }
 
@@ -79,11 +81,14 @@ h1 {
 	letter-spacing: -0.01em;
 }
 
-.tagline {
+.semibold {
+	font-weight: 500;
+}
+
+.intro {
 	flex-basis: 100%;
 	margin: 0;
 	color: var(--muted);
-	max-width: 39rem;
 }
 
 a {
