@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildMusicSet } from '../src/core/dataset';
 import { modToMidi } from '../src/core/mod2midi';
-import { convertTrack, trackName, trackTitle } from '../src/core/music';
+import { convertTrack, moduleName, trackName, trackTitle } from '../src/core/music';
 import { examine } from '../src/core/pipeline';
 import { fixture, fixtureDir, haveFixture } from './fixtures';
 
@@ -27,6 +27,13 @@ describe('naming a track', () => {
 	it('leaves a name that already fits alone', () => {
 		expect(trackName('jungle')).toBe('JUNGLE.STM');
 		expect(trackName('holocube')).toBe('HOLOCUBE.STM');
+	});
+
+	it('puts the module beside its stream, under the same name', () => {
+		// The game asks for both by the one name, and plays whichever
+		// the machine can.
+		const track = { out: trackName('teleport2'), title: 'teleport2', src: '', bytes: new Uint8Array() };
+		expect(moduleName(track)).toBe('TELEPOR2.MOD');
 	});
 
 	it('reads the title out of a module and drops the prefix', () => {
@@ -62,6 +69,7 @@ describe.skipIf(!haveFixture('disk1.adf'))('the score, off the disks', () => {
 		// weaker test rather than a passing one.
 		const haveReferences = existsSync(join(fixtureDir, 'music'));
 		let compared = 0;
+		let modules = 0;
 		// Asking for no percussion has to mean no percussion. An earlier
 		// draft used `?? 'auto'`, which folds an explicit null back into
 		// auto-detect, and it went unnoticed because the three modules
@@ -93,6 +101,15 @@ describe.skipIf(!haveFixture('disk1.adf'))('the score, off the disks', () => {
 				]);
 				compared++;
 			}
+			// and the module goes across untouched, as the port's
+			// tools/make-music.sh copies it
+			const module = join(fixtureDir, 'music', moduleName(track));
+			if (existsSync(module)) {
+				expect([...track.bytes], `${moduleName(track)} against the reference`).toEqual([
+					...new Uint8Array(readFileSync(module)),
+				]);
+				modules++;
+			}
 		}
 		// The whole score is about 107KB, from a six-second lift cue to
 		// a 198-second options theme.
@@ -100,6 +117,7 @@ describe.skipIf(!haveFixture('disk1.adf'))('the score, off the disks', () => {
 		expect(total).toBeLessThan(115 * 1024);
 		if (haveReferences) {
 			expect(compared, 'tracks checked against the Python chain').toBe(21);
+			expect(modules, 'modules checked against the port\'s copies').toBe(21);
 		}
 	}, 30_000);
 });

@@ -4,7 +4,7 @@
 
 import './main.css';
 import { buildDataSet, buildMusicSet, type DataSet } from './core/dataset';
-import { convertTrack } from './core/music';
+import { convertTrack, moduleName } from './core/music';
 import type { DiskResult } from './core/pipeline';
 import { buildZip, type ZipStream } from './core/zip';
 import type { ExamineRequest, ExamineResponse } from './worker';
@@ -229,6 +229,9 @@ function extract(): void {
 	music = [];
 	const musicFailed: string[] = [];
 	for (const track of musicSet.tracks) {
+		// The module as it is, for an STE or Mega STE to play...
+		music.push({ out: moduleName(track), bytes: track.bytes });
+		// ...and its YM version, for every ST.
 		try {
 			music.push({ out: track.out, bytes: convertTrack(track.bytes) });
 		} catch (e) {
@@ -239,8 +242,9 @@ function extract(): void {
 	}
 	if (musicFailed.length > 0) {
 		notes.push(
-			'<p class="bad">These tracks could not be converted, and the game will be quiet where ' +
-			`they would have played:</p><ul>${musicFailed.map((n) => `<li>${n}</li>`).join('')}</ul>`,
+			'<p class="bad">These tracks could not be converted to YM, so a plain ST will be quiet where ' +
+			'they would have played (an STE still plays the original):</p>' +
+			`<ul>${musicFailed.map((n) => `<li>${n}</li>`).join('')}</ul>`,
 		);
 	}
 	if (dataSet.missing.length > 0) {
@@ -265,7 +269,7 @@ function extract(): void {
 
 	const kb = Math.round((dataSet.totalBytes + music.reduce((n, t) => n + t.bytes.length, 0)) / 1024);
 	notes.unshift(
-		`<p><strong>${dataSet.files.length} files and ${music.length} music tracks, ` +
+		`<p><strong>${dataSet.files.length} files and ${musicSet.tracks.length} music tracks, ` +
 		`${kb.toLocaleString()}KB.</p>` +
 		`<p>Unzip it so that <code>FLASHBAK.TOS</code> and the <code>DATA</code> and <code>MUSIC</code> 
 		folders are all in the same folder on your hard disk and you're ready to go!</p>`,

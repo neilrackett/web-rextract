@@ -47,15 +47,17 @@ Twenty files appear on more than one disk. On the original release every
 copy is identical, so one is kept and the rest are checked against it; a
 disk that disagrees is reported rather than quietly winning.
 
-And 21 music tracks, in a `MUSIC` folder beside it.
+And 21 music tracks, in a `MUSIC` folder beside it: each ProTracker
+module as it is (`.MOD`), and a YM version of it (`.STM`) under the
+same name.
 
 ## The music
 
-The Amiga score is sampled music, which a plain ST cannot play: there is
-no DMA sound on one and this port has no software mixer. Every ST does
-have the YM2149, so each ProTracker module on the disks is converted
-here into a YM register stream, the same way the port's own
-`tools/make-music.sh` does it offline:
+The Amiga score is sampled music. An STE or Mega STE plays the modules
+as they are, on its DMA sound, so each is copied across unchanged. A
+plain ST has no DMA sound, but every ST has the YM2149, so each module
+on the disks is also converted here into a YM register stream, the same
+way the port's own `tools/make-music.sh` does it offline:
 
 ```
 MOD  ->  Standard MIDI File  ->  STM
@@ -171,7 +173,7 @@ the dropped file
       +-- music.ts        the score: mod2midi.ts -> midi2stm.ts
       |
       v
-  zip.ts           DATA/ and MUSIC/, deflated
+  zip.ts           DATA/ and MUSIC/, stored
 ```
 
 Each disk is read in its own worker, so four of them decode at once and

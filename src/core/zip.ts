@@ -7,8 +7,8 @@
 // Those two and nothing else. The port's own notes make the point that
 // DATA/ should hold only what came off the disks, so that it can be
 // compared against a fresh extraction - a stray readme in there would
-// make that comparison lie. MUSIC is derived rather than copied, so it
-// is kept apart.
+// make that comparison lie. MUSIC is the score, not the game's data -
+// the modules and the streams made from them - so it is kept apart.
 
 import { zipSync, type Zippable } from 'fflate';
 import type { ExtractedFile } from './dataset';

@@ -2,13 +2,14 @@
 // Copyright (c) 2026 Neil Rackett
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The chip music: which files on the disks are the score, what each
-// track is called on an Atari volume, and the run from a ProTracker
-// module to a YM register stream.
+// The music: which files on the disks are the score, what each track
+// is called on an Atari volume, and the run from a ProTracker module
+// to a YM register stream.
 //
-// The Amiga score is sampled music, which a plain ST cannot play - no
-// DMA sound, and this port has no software mixer. Every ST does have
-// the YM2149, so each module is converted here into the register
+// The Amiga score is sampled music. An STE or Mega STE plays the
+// modules as they are, on its DMA sound, so each goes into MUSIC
+// unchanged. A plain ST has no DMA sound, but every ST has the
+// YM2149, so each module is also converted here into the register
 // stream STDL's player reads. The two legs of that are mod2midi.ts and
 // midi2stm.ts; this file is what decides which modules to run through
 // them and what to call the results.
@@ -65,6 +66,11 @@ export function trackTitle(module: Uint8Array): string {
 export function trackName(title: string): string {
 	const up = title.toUpperCase().replace(/_/g, '');
 	return (up.length > 8 ? up.slice(0, 7) + up.slice(-1) : up) + '.STM';
+}
+
+/** The module itself goes beside its stream, under the same name. */
+export function moduleName(track: MusicTrack): string {
+	return track.out.replace(/\.STM$/, '.MOD');
 }
 
 export function selectModules(volume: AmigaVolume): MusicTrack[] {
