@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildMusicSet } from '../src/core/dataset';
 import { modToMidi } from '../src/core/mod2midi';
-import { convertTrack, moduleName, trackName, trackTitle } from '../src/core/music';
+import { convertTrack, moduleName, musicFiles, trackName, trackTitle } from '../src/core/music';
 import { examine } from '../src/core/pipeline';
 import { fixture, fixtureDir, haveFixture } from './fixtures';
 
@@ -43,6 +43,20 @@ describe('naming a track', () => {
 			module[i] = title.charCodeAt(i);
 		}
 		expect(trackTitle(module)).toBe('jungle');
+	});
+});
+
+describe('what goes in MUSIC', () => {
+	it('ships the module even when its YM version cannot be made', () => {
+		// An STE plays the module whatever happens to the conversion,
+		// so a track that will not convert loses only its stream, and
+		// is named so the page can say a plain ST will be quiet there.
+		const track = { out: trackName('jungle'), title: 'jungle', src: '', bytes: new Uint8Array(4) };
+		const built = musicFiles([track]);
+		expect(built.files.map((f) => f.out)).toEqual(['JUNGLE.MOD']);
+		expect(built.files[0].bytes).toBe(track.bytes);
+		expect(built.failed.length).toBe(1);
+		expect(built.failed[0]).toMatch(/^JUNGLE\.STM \(/);
 	});
 });
 

@@ -12,11 +12,12 @@
 // YM2149, so each module is also converted here into the register
 // stream STDL's player reads. The two legs of that are mod2midi.ts and
 // midi2stm.ts; this file is what decides which modules to run through
-// them and what to call the results.
+// them, what to call the results and what goes in MUSIC.
 
 import { modToMidi, isModule, moduleTitle } from './mod2midi';
 import { midiToStm } from './midi2stm';
 import type { AmigaVolume } from './amigados';
+import type { ZipStream } from './zip';
 
 export interface MusicTrack {
 	/** The name on an Atari volume, e.g. TELEPOR2.STM. */
@@ -91,6 +92,29 @@ export function selectModules(volume: AmigaVolume): MusicTrack[] {
 /** One module, all the way to the stream the ST plays. */
 export function convertTrack(module: Uint8Array): Uint8Array {
 	return midiToStm(modToMidi(module));
+}
+
+/**
+ * Everything MUSIC holds for a set of tracks: each module as it is, for
+ * an STE or Mega STE to play, and its YM stream under the same name for
+ * every ST. A module that will not convert still goes in - one track
+ * should not cost the player the other twenty, and an STE plays it
+ * anyway - and is named in `failed`, so the page can say a plain ST will
+ * be quiet there. The page and the end-to-end test both build MUSIC
+ * through this, so the test checks what the download actually holds.
+ */
+export function musicFiles(tracks: MusicTrack[]): { files: ZipStream[]; failed: string[] } {
+	const files: ZipStream[] = [];
+	const failed: string[] = [];
+	for (const track of tracks) {
+		files.push({ out: moduleName(track), bytes: track.bytes });
+		try {
+			files.push({ out: track.out, bytes: convertTrack(track.bytes) });
+		} catch (e) {
+			failed.push(`${track.out} (${(e as Error).message})`);
+		}
+	}
+	return { files, failed };
 }
 
 export { isModule, moduleTitle };

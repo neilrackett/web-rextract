@@ -4,7 +4,7 @@
 
 import './main.css';
 import { buildDataSet, buildMusicSet, type DataSet } from './core/dataset';
-import { convertTrack, moduleName } from './core/music';
+import { musicFiles } from './core/music';
 import type { DiskResult } from './core/pipeline';
 import { buildZip, type ZipStream } from './core/zip';
 import type { ExamineRequest, ExamineResponse } from './worker';
@@ -226,20 +226,9 @@ function extract(): void {
 			.map((slot, i) => (slot.kind === 'ready' ? { label: i + 1, files: slot.result.music } : null))
 			.filter((c): c is { label: number; files: DiskResult['music'] } => c !== null),
 	);
-	music = [];
-	const musicFailed: string[] = [];
-	for (const track of musicSet.tracks) {
-		// The module as it is, for an STE or Mega STE to play...
-		music.push({ out: moduleName(track), bytes: track.bytes });
-		// ...and its YM version, for every ST.
-		try {
-			music.push({ out: track.out, bytes: convertTrack(track.bytes) });
-		} catch (e) {
-			// One module that will not convert should not cost the
-			// player the other twenty.
-			musicFailed.push(`${track.out} (${(e as Error).message})`);
-		}
-	}
+	const built = musicFiles(musicSet.tracks);
+	music = built.files;
+	const musicFailed = built.failed;
 	if (musicFailed.length > 0) {
 		notes.push(
 			'<p class="bad">These tracks could not be converted to YM, so a plain ST will be quiet where ' +

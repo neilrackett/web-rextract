@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { crc32 } from '../src/core/crc32';
 import { buildDataSet, buildMusicSet } from '../src/core/dataset';
-import { convertTrack } from '../src/core/music';
+import { moduleName, musicFiles } from '../src/core/music';
 import { KNOWN_DISKS, REQUIRED_FILES } from '../src/core/manifest';
 import { examine } from '../src/core/pipeline';
 import { unzipSync } from 'fflate';
@@ -53,10 +53,11 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		const read = await Promise.all(DISKS.map((n) => examine(`disk${n}.adf`, fixture(`disk${n}.adf`))));
 		const data = buildDataSet(read.map((r, i) => ({ label: i + 1, files: r.files })));
 		const music = buildMusicSet(read.map((r, i) => ({ label: i + 1, files: r.music })));
-		const zip = buildZip(
-			data.files,
-			music.tracks.map((t) => ({ out: t.out, bytes: convertTrack(t.bytes) })),
-		);
+		// MUSIC built exactly as the page builds it, so this checks what
+		// the download holds rather than a copy of how it is made.
+		const built = musicFiles(music.tracks);
+		expect(built.failed).toEqual([]);
+		const zip = buildZip(data.files, built.files);
 		expect(zip.length).toBeGreaterThan(1_000_000);
 		// PK\003\004, then the first entry's name.
 		expect([...zip.subarray(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
@@ -67,9 +68,15 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		const back = unzipSync(zip);
 		const names = Object.keys(back);
 		expect(names.filter((n) => n.startsWith('DATA/')).length).toBe(REQUIRED_FILES.length);
-		expect(names.filter((n) => n.startsWith('MUSIC/')).length).toBe(21);
+		// Every track twice: the module for an STE or Mega STE, and its
+		// YM stream under the same name for every ST.
+		expect(music.tracks.length).toBe(21);
+		expect(names.filter((n) => n.startsWith('MUSIC/')).length).toBe(42);
 		expect(names.filter((n) => !n.startsWith('DATA/') && !n.startsWith('MUSIC/'))).toEqual([]);
-		expect(back['MUSIC/JUNGLE.STM'].subarray(0, 4)).toEqual(new Uint8Array([0x53, 0x54, 0x4d, 0x31]));
+		for (const track of music.tracks) {
+			expect(back[`MUSIC/${moduleName(track)}`], moduleName(track)).toEqual(track.bytes);
+			expect(back[`MUSIC/${track.out}`].subarray(0, 4), track.out).toEqual(new Uint8Array([0x53, 0x54, 0x4d, 0x31]));
+		}
 	}, 30_000);
 });
 
