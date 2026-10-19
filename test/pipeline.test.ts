@@ -11,6 +11,7 @@ import { buildDataSet, buildMusicSet } from '../src/core/dataset';
 import { moduleName, musicFiles } from '../src/core/music';
 import { KNOWN_DISKS, REQUIRED_FILES } from '../src/core/manifest';
 import { examine } from '../src/core/pipeline';
+import { unpackedFiles } from '../src/core/unpacked';
 import { unzipSync } from 'fflate';
 import { buildZip } from '../src/core/zip';
 import { fixture, haveFixture } from './fixtures';
@@ -49,7 +50,7 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		}
 	});
 
-	it('writes a zip holding DATA and MUSIC', async () => {
+	it('writes a zip holding DATA, MUSIC and UNPACKED', async () => {
 		const read = await Promise.all(DISKS.map((n) => examine(`disk${n}.adf`, fixture(`disk${n}.adf`))));
 		const data = buildDataSet(read.map((r, i) => ({ label: i + 1, files: r.files })));
 		const music = buildMusicSet(read.map((r, i) => ({ label: i + 1, files: r.music })));
@@ -57,7 +58,9 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		// the download holds rather than a copy of how it is made.
 		const built = musicFiles(music.tracks);
 		expect(built.failed).toEqual([]);
-		const zip = buildZip(data.files, built.files);
+		const unpacked = unpackedFiles(data.files);
+		expect(unpacked.failed).toEqual([]);
+		const zip = buildZip(data.files, built.files, unpacked.files);
 		expect(zip.length).toBeGreaterThan(1_000_000);
 		// PK\003\004, then the first entry's name.
 		expect([...zip.subarray(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
@@ -72,10 +75,34 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		// YM stream under the same name for every ST.
 		expect(music.tracks.length).toBe(21);
 		expect(names.filter((n) => n.startsWith('MUSIC/')).length).toBe(42);
-		expect(names.filter((n) => !n.startsWith('DATA/') && !n.startsWith('MUSIC/'))).toEqual([]);
+		// The cutscenes, the title picture, the sprites, the level
+		// graphics, objects and collision data: every packed file the
+		// game unpacks as it loads, and nothing it keeps packed.
+		expect(names.filter((n) => n.startsWith('UNPACKED/')).length).toBe(46);
+		expect(names.filter((n) => /^UNPACKED\/.*\.(LEV|MBK)$/.test(n))).toEqual([]);
+		expect(
+			names.filter((n) => !n.startsWith('DATA/') && !n.startsWith('MUSIC/') && !n.startsWith('UNPACKED/')),
+		).toEqual([]);
 		for (const track of music.tracks) {
 			expect(back[`MUSIC/${moduleName(track)}`], moduleName(track)).toEqual(track.bytes);
 			expect(back[`MUSIC/${track.out}`].subarray(0, 4), track.out).toEqual(new Uint8Array([0x53, 0x54, 0x4d, 0x31]));
+		}
+	}, 30_000);
+});
+
+describe.skipIf(!haveFixture('disk1.adf') || !haveFixture('unpacked/PERSO.SPM'))('UNPACKED against the port', () => {
+	it('writes every file byte for byte as tools/make-unpacked.py does', async () => {
+		// The ST reads these in place of unpacking DATA itself, so they
+		// have to be what its own decoder would have made. The port's
+		// tool is checked against that decoder in C; this checks the two
+		// tools agree. Put its output in REXTRACT_FIXTURES/unpacked.
+		const read = await Promise.all(DISKS.map((n) => examine(`disk${n}.adf`, fixture(`disk${n}.adf`))));
+		const data = buildDataSet(read.map((r, i) => ({ label: i + 1, files: r.files })));
+		const unpacked = unpackedFiles(data.files);
+		expect(unpacked.files.length).toBe(46);
+		for (const file of unpacked.files) {
+			expect(haveFixture(`unpacked/${file.out}`), file.out).toBe(true);
+			expect(crc32(file.bytes), file.out).toBe(crc32(fixture(`unpacked/${file.out}`)));
 		}
 	}, 30_000);
 });

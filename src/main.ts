@@ -5,6 +5,7 @@
 import './main.css';
 import { buildDataSet, buildMusicSet, type DataSet } from './core/dataset';
 import { musicFiles } from './core/music';
+import { unpackedFiles } from './core/unpacked';
 import type { DiskResult } from './core/pipeline';
 import { buildZip, type ZipStream } from './core/zip';
 import type { ExamineRequest, ExamineResponse } from './worker';
@@ -30,6 +31,7 @@ let pending: Pending[] = [];
 let rejected: Rejected[] = [];
 let dataSet: DataSet | null = null;
 let music: ZipStream[] = [];
+let unpacked: ZipStream[] = [];
 let nextId = 1;
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -236,6 +238,17 @@ function extract(): void {
 			`<ul>${musicFailed.map((n) => `<li>${n}</li>`).join('')}</ul>`,
 		);
 	}
+	// The packed files once more, unpacked: milliseconds here, seconds
+	// for every load on the ST (see unpacked.ts).
+	const prepared = unpackedFiles(dataSet.files);
+	unpacked = prepared.files;
+	if (prepared.failed.length > 0) {
+		notes.push(
+			'<p class="bad">These would not unpack, so they are left out of UNPACKED and the ST will ' +
+			'unpack them itself, which is slower but works:</p>' +
+			`<ul>${prepared.failed.map((n) => `<li>${n}</li>`).join('')}</ul>`,
+		);
+	}
 	if (dataSet.missing.length > 0) {
 		notes.push(
 			`<p class="bad">${dataSet.missing.length} file(s) the game needs are on none of these disks:</p>` +
@@ -256,16 +269,17 @@ function extract(): void {
 		);
 	}
 
-	const kb = Math.round((dataSet.totalBytes + music.reduce((n, t) => n + t.bytes.length, 0)) / 1024);
+	const sum = (list: ZipStream[]) => list.reduce((n, t) => n + t.bytes.length, 0);
+	const kb = Math.round((dataSet.totalBytes + sum(music) + sum(unpacked)) / 1024);
 	notes.unshift(
-		`<p><strong>${dataSet.files.length} files and ${musicSet.tracks.length} music tracks, ` +
-		`${kb.toLocaleString()}KB.</p>` +
-		`<p>Unzip it so that <code>FLASHBAK.TOS</code> and the <code>DATA</code> and <code>MUSIC</code> 
-		folders are all in the same folder on your hard disk and you're ready to go!</p>`,
+		`<p><strong>${dataSet.files.length} files, ${musicSet.tracks.length} music tracks and ` +
+		`${unpacked.length} unpacked files, ${kb.toLocaleString()}KB.</p>` +
+		`<p>Unzip it so that <code>FLASHBAK.TOS</code> and the <code>DATA</code>, <code>MUSIC</code> 
+		and <code>UNPACKED</code> folders are all in the same folder on your hard disk and you're ready to go!</p>`,
 	);
 	messages.innerHTML = notes.join('');
 
-	const zip = buildZip(dataSet.files, music);
+	const zip = buildZip(dataSet.files, music, unpacked);
 	const url = URL.createObjectURL(new Blob([zip as BlobPart], { type: 'application/zip' }));
 	const a = document.createElement('a');
 	a.href = url;
@@ -305,8 +319,9 @@ async function saveToFolder(): Promise<void> {
 		};
 		await put('DATA', dataSet.files);
 		await put('MUSIC', music);
+		await put('UNPACKED', unpacked);
 		messages.innerHTML =
-			`<p><strong>${written} files written to DATA and MUSIC in the folder you chose.</strong></p>`;
+			`<p><strong>${written} files written to DATA, MUSIC and UNPACKED in the folder you chose.</strong></p>`;
 	} catch (e) {
 		const err = e as Error;
 		if (err.name !== 'AbortError') {
@@ -323,6 +338,7 @@ function reset(): void {
 	rejected = [];
 	dataSet = null;
 	music = [];
+	unpacked = [];
 	picker.value = '';
 	messages.innerHTML = '';
 	render();

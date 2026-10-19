@@ -51,6 +51,35 @@ And 21 music tracks, in a `MUSIC` folder beside it: each ProTracker
 module as it is (`.MOD`), and a YM version of it (`.STM`) under the
 same name.
 
+And 46 files in an `UNPACKED` folder beside those: the data's packed
+files with the unpacking already done.
+
+## The unpacked copies
+
+Most of the Amiga data is packed with bytekiller, and on an 8MHz ST
+unpacking it was most of the wait for a scene, the title or a level -
+3.6 seconds for Conrad's sprites alone, 1.2 before the intro and 2.3 at
+the start of level 1. Done here, it takes milliseconds, and the ST
+reads the results straight into place.
+
+The folder is optional. The game looks in `UNPACKED` first and falls
+back to `DATA` for anything that is not there, and an older build of
+the game never looks in it at all - which is why the copies sit beside
+`DATA` rather than replacing anything in it.
+
+Only what the game unpacks as it loads goes in: the cutscenes (`.CMP`),
+the title picture, the sprites (`.SPM`), level graphics (`.SGD`),
+objects (`.OBC`) and collision data (`.CT`). Room data (`.LEV`) and
+sprite banks (`.MBK`) stay packed, because the game keeps those whole
+in memory and a 2.5MB machine cannot spare them unpacked.
+
+Each file keeps its `DATA` name and holds `RXU1`, a big-endian 32-bit
+stream count, a 32-bit size per stream and then the streams: two for a
+cutscene (its polygons, then its commands), one for everything else.
+The game checks that the sizes add up to the file's length before it
+trusts one. The port's `tools/make-unpacked.py` writes the same files,
+and the tests compare the two byte for byte (see below).
+
 ## The music
 
 The Amiga score is sampled music. An STE or Mega STE plays the modules
@@ -132,7 +161,10 @@ The directory holds `disk1.adf` .. `disk4.adf`, and optionally
 `disk1.ipf` .. `disk4.ipf`. A `music/` subdirectory holding the `.STM`
 files the port's own `tools/make-music.sh` produced turns on the
 byte-comparison against the Python chain. Without any of it those tests
-skip themselves, so a fresh clone still passes. Keep that directory outside this repository.
+skip themselves, so a fresh clone still passes. An `unpacked/`
+subdirectory holding what the port's `tools/make-unpacked.py` wrote
+turns on the same kind of byte-comparison for `UNPACKED`. Keep that
+directory outside this repository.
 
 If you have both, the IPF tests compare what this decoder produces
 against the ADFs beside it, file by file. Producing those ADFs with
@@ -171,9 +203,10 @@ the dropped file
   dataset.ts       which files, what they are called, which disk this is
       |
       +-- music.ts        the score: mod2midi.ts -> midi2stm.ts
+      +-- unpacked.ts     the packed files unpacked: bytekiller.ts
       |
       v
-  zip.ts           DATA/ and MUSIC/, stored
+  zip.ts           DATA/, MUSIC/ and UNPACKED/, stored
 ```
 
 Each disk is read in its own worker, so four of them decode at once and

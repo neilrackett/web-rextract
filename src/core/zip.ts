@@ -2,13 +2,16 @@
 // Copyright (c) 2026 Neil Rackett
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The download: a zip holding a DATA folder and a MUSIC folder.
+// The download: a zip holding a DATA folder, a MUSIC folder and an
+// UNPACKED folder.
 //
-// Those two and nothing else. The port's own notes make the point that
-// DATA/ should hold only what came off the disks, so that it can be
-// compared against a fresh extraction - a stray readme in there would
-// make that comparison lie. MUSIC is the score, not the game's data -
-// the modules and the streams made from them - so it is kept apart.
+// Those three and nothing else. The port's own notes make the point
+// that DATA/ should hold only what came off the disks, so that it can
+// be compared against a fresh extraction - a stray readme in there
+// would make that comparison lie. MUSIC is the score, not the game's
+// data - the modules and the streams made from them - so it is kept
+// apart, and UNPACKED is made from DATA rather than taken off the
+// disks (see unpacked.ts), so it is kept apart too.
 
 import { zipSync, type Zippable } from 'fflate';
 import type { ExtractedFile } from './dataset';
@@ -46,14 +49,18 @@ export interface ZipStream {
  */
 const STORE = 0;
 
-export function buildZip(files: ExtractedFile[], music: ZipStream[] = []): Uint8Array {
+export function buildZip(files: ExtractedFile[], music: ZipStream[] = [], unpacked: ZipStream[] = []): Uint8Array {
 	const entries: Zippable = {};
 	for (const file of files) {
 		entries[`DATA/${file.out}`] = file.bytes;
 	}
-	// MUSIC sits beside DATA, which is where the game looks for it.
+	// MUSIC and UNPACKED sit beside DATA, which is where the game looks
+	// for them.
 	for (const track of music) {
 		entries[`MUSIC/${track.out}`] = track.bytes;
+	}
+	for (const file of unpacked) {
+		entries[`UNPACKED/${file.out}`] = file.bytes;
 	}
 	return zipSync(entries, { level: STORE });
 }

@@ -42,9 +42,13 @@ function methods(zip: Uint8Array): number[] {
 }
 
 describe('the zip', () => {
-	it('holds DATA and MUSIC, and nothing else', () => {
-		const zip = buildZip([file('A.CMP', [1, 2, 3])], [{ out: 'JUNGLE.STM', bytes: new Uint8Array([4, 5]) }]);
-		expect(Object.keys(unzipSync(zip)).sort()).toEqual(['DATA/A.CMP', 'MUSIC/JUNGLE.STM']);
+	it('holds DATA, MUSIC and UNPACKED, and nothing else', () => {
+		const zip = buildZip(
+			[file('A.CMP', [1, 2, 3])],
+			[{ out: 'JUNGLE.STM', bytes: new Uint8Array([4, 5]) }],
+			[{ out: 'A.CMP', bytes: new Uint8Array([6]) }],
+		);
+		expect(Object.keys(unzipSync(zip)).sort()).toEqual(['DATA/A.CMP', 'MUSIC/JUNGLE.STM', 'UNPACKED/A.CMP']);
 	});
 
 	it('stores every entry rather than deflating it', () => {
