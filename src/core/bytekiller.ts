@@ -22,6 +22,15 @@ export class BytekillerError extends Error {}
 const MAX_SIZE = 1 << 24;
 
 export function unpackBytekiller(src: Uint8Array): Uint8Array {
+	return unpackBytekillerSpan(src).out;
+}
+
+/**
+ * The stream, and where in src its packed bytes begin: the last long
+ * read. A sprite bank file says only where each packed bank ends, so
+ * this is how its table's own end is found.
+ */
+export function unpackBytekillerSpan(src: Uint8Array): { out: Uint8Array; start: number } {
 	if (src.length < 12) {
 		throw new BytekillerError('too short to be a packed stream');
 	}
@@ -109,5 +118,5 @@ export function unpackBytekiller(src: Uint8Array): Uint8Array {
 	if (crc !== 0) {
 		throw new BytekillerError('the checksum does not match');
 	}
-	return out;
+	return { out, start: pos + 4 };
 }

@@ -54,8 +54,44 @@ describe('UNPACKED', () => {
 		expect(unpackedStreams('INTRO.CMP', storedFirst)).toEqual([a, b]);
 	});
 
-	it('leaves alone what the game keeps packed in memory, and the rest', () => {
-		for (const name of ['LEVEL1.LEV', 'LEVEL1.MBK', 'LEVEL1.PAL', 'FONT8.SPR']) {
+	it('unpacks room data a room at a time, empty where a room has none', () => {
+		// a BE32 offset per room to where its packed stream ends; a room
+		// with no data ends where the one before it does
+		const pa = pack(a);
+		const pb = pack(b);
+		const table: number[] = [];
+		const endA = 64 * 4 + pa.length;
+		const endB = endA + pb.length;
+		for (let room = 0; room < 64; room++) {
+			table.push(...be32(room === 0 ? endA : room < 5 ? endA : endB));
+		}
+		const parts = unpackedStreams('LEVEL1.LEV', concat(table, pa, pb));
+		expect(parts).toHaveLength(64);
+		expect(parts![0]).toEqual(a);
+		expect(parts!.slice(1, 5).every((p) => p.length === 0)).toBe(true);
+		expect(parts![5]).toEqual(b);
+		expect(parts!.slice(6).every((p) => p.length === 0)).toBe(true);
+	});
+
+	it('unpacks banks one by one, stored or packed, and finds where the table ends', () => {
+		// 6-byte entries: a BE32 offset and a signed BE16 count of 32-byte
+		// tiles. Packed: the offset is where the stream ends. Stored (a
+		// negative count): where the bank starts. None: a count of 0.
+		const tiles = Uint8Array.from({ length: 64 }, (_, i) => (i * 7) & 0xff);
+		const stored = Uint8Array.from({ length: 32 }, (_, i) => 255 - i);
+		const pt = pack(tiles);
+		const head = 3 * 6;
+		const entry = (off: number, count: number) => [...be32(off), (count >> 8) & 0xff, count & 0xff];
+		const bytes = concat(entry(head + pt.length, 2), entry(head + pt.length, -1), entry(0, 0), pt, stored);
+		expect(unpackedStreams('LEVEL1.MBK', bytes)).toEqual([tiles, stored, new Uint8Array(0)]);
+
+		// a bank that unpacks to other than its count of tiles is refused
+		const wrong = concat(entry(6 + pt.length, 3), pt);
+		expect(() => unpackedStreams('LEVEL1.MBK', wrong)).toThrow();
+	});
+
+	it('leaves alone what the game reads as it is', () => {
+		for (const name of ['LEVEL1.PAL', 'LEVEL1.RPC', 'FONT8.SPR']) {
 			expect(unpackedStreams(name, pack(a)), name).toBeNull();
 		}
 	});

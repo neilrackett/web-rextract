@@ -77,9 +77,11 @@ describe.skipIf(!haveFixture('disk1.adf'))('from ADFs', () => {
 		expect(names.filter((n) => n.startsWith('MUSIC/')).length).toBe(42);
 		// The cutscenes, the title picture, the sprites, the level
 		// graphics, objects and collision data: every packed file the
-		// game unpacks as it loads, and nothing it keeps packed.
-		expect(names.filter((n) => n.startsWith('UNPACKED/')).length).toBe(46);
-		expect(names.filter((n) => /^UNPACKED\/.*\.(LEV|MBK)$/.test(n))).toEqual([]);
+		// game unpacks as it loads. And the room data and banks it
+		// unpacks room by room: 7 and 6 of those.
+		expect(names.filter((n) => n.startsWith('UNPACKED/')).length).toBe(59);
+		expect(names.filter((n) => /^UNPACKED\/.*\.LEV$/.test(n)).length).toBe(7);
+		expect(names.filter((n) => /^UNPACKED\/.*\.MBK$/.test(n)).length).toBe(6);
 		expect(
 			names.filter((n) => !n.startsWith('DATA/') && !n.startsWith('MUSIC/') && !n.startsWith('UNPACKED/')),
 		).toEqual([]);
@@ -99,7 +101,7 @@ describe.skipIf(!haveFixture('disk1.adf') || !haveFixture('unpacked/PERSO.SPM'))
 		const read = await Promise.all(DISKS.map((n) => examine(`disk${n}.adf`, fixture(`disk${n}.adf`))));
 		const data = buildDataSet(read.map((r, i) => ({ label: i + 1, files: r.files })));
 		const unpacked = unpackedFiles(data.files);
-		expect(unpacked.files.length).toBe(46);
+		expect(unpacked.files.length).toBe(59);
 		for (const file of unpacked.files) {
 			expect(haveFixture(`unpacked/${file.out}`), file.out).toBe(true);
 			expect(crc32(file.bytes), file.out).toBe(crc32(fixture(`unpacked/${file.out}`)));

@@ -51,7 +51,7 @@ And 21 music tracks, in a `MUSIC` folder beside it: each ProTracker
 module as it is (`.MOD`), and a YM version of it (`.STM`) under the
 same name.
 
-And 46 files in an `UNPACKED` folder beside those: the data's packed
+And 59 files in an `UNPACKED` folder beside those: the data's packed
 files with the unpacking already done.
 
 ## The unpacked copies
@@ -67,15 +67,19 @@ back to `DATA` for anything that is not there, and an older build of
 the game never looks in it at all - which is why the copies sit beside
 `DATA` rather than replacing anything in it.
 
-Only what the game unpacks as it loads goes in: the cutscenes (`.CMP`),
-the title picture, the sprites (`.SPM`), level graphics (`.SGD`),
-objects (`.OBC`) and collision data (`.CT`). Room data (`.LEV`) and
-sprite banks (`.MBK`) stay packed, because the game keeps those whole
-in memory and a 2.5MB machine cannot spare them unpacked.
+What the game unpacks as it loads goes in: the cutscenes (`.CMP`), the
+title picture, the sprites (`.SPM`), level graphics (`.SGD`), objects
+(`.OBC`) and collision data (`.CT`). So does what it unpacks on entering
+a room: the room data (`.LEV`) and the object and tile banks (`.MBK`).
+The game keeps those two whole in memory, so it reads them from here
+only on a machine with the RAM to spare (4MB); a 2.5MB machine unpacks
+`DATA`'s room by room, as before.
 
 Each file keeps its `DATA` name and holds `RXU1`, a big-endian 32-bit
 stream count, a 32-bit size per stream and then the streams: two for a
-cutscene (its polygons, then its commands), one for everything else.
+cutscene (its polygons, then its commands), 64 for room data (one per
+room, empty where a room has none), one per bank for banks (empty for
+an empty entry), one for everything else.
 The game checks that the sizes add up to the file's length before it
 trusts one. The port's `tools/make-unpacked.py` writes the same files,
 and the tests compare the two byte for byte (see below).

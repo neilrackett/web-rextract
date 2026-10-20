@@ -11,23 +11,28 @@
 // for anything not here, so the folder is optional - and DATA stays
 // exactly what came off the disks, which an older build still needs.
 //
-// Only what the game unpacks as a scene, the title or a level loads:
+// What the game unpacks as a scene, the title or a level loads:
 // cutscenes, the title picture, sprites, level graphics, objects and
-// collision data. Room data (.LEV) and sprite banks (.MBK) stay packed:
-// the game keeps those whole in memory, and a 2.5MB machine cannot
-// spare them unpacked.
+// collision data. And what it unpacks on entering a room: the room data
+// (.LEV, a stream per room) and the object and tile banks (.MBK, a
+// stream per bank). The game keeps those two whole in memory, so it
+// reads them from here only where it has the RAM to spare (a 4MB
+// machine); elsewhere it unpacks DATA's as before, room by room.
 //
 // The port's tools/make-unpacked.py writes the same folder, and the two
 // have to agree byte for byte. Each file keeps its DATA name and holds
 //
 //   "RXU1"         magic and version
-//   BE32 count     streams: 2 for a cutscene (polygons, commands), else 1
+//   BE32 count     streams: 2 for a cutscene (polygons, commands), 64 for
+//                  room data (one per room, empty where a room has none),
+//                  one per bank for banks (empty for an empty entry),
+//                  else 1
 //   BE32 size      one per stream
 //   the streams    as the unpacker writes them
 //
 // and the ST checks the sizes add up before trusting any of it.
 
-import { unpackBytekiller } from './bytekiller';
+import { unpackBytekiller, unpackBytekillerSpan } from './bytekiller';
 import type { ExtractedFile } from './dataset';
 import type { ZipStream } from './zip';
 
@@ -80,6 +85,47 @@ export function unpackedStreams(name: string, bytes: Uint8Array): Uint8Array[] |
 		case 'SGD':
 		case 'CT':
 			return [unpackBytekiller(bytes)];
+		case 'LEV': {
+			// 64 rooms, each a BE32 offset to where its packed stream
+			// ends; a room with no data here ends where the one before
+			// it does (the first, where the table does)
+			const parts: Uint8Array[] = [];
+			let prev = 64 * 4;
+			for (let room = 0; room < 64; room++) {
+				const end = be32(bytes, room * 4);
+				parts.push(end !== prev ? unpackBytekiller(bytes.subarray(0, end)) : new Uint8Array(0));
+				prev = end;
+			}
+			return parts;
+		}
+		case 'MBK': {
+			// 6-byte entries: a BE32 offset and a signed BE16 count of
+			// 32-byte tiles - negative where the bank is stored as it is
+			// (the offset is then its start), positive where packed (the
+			// offset is where its stream ends), 0 for none. The table
+			// runs up to where the first bank begins.
+			const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+			const parts: Uint8Array[] = [];
+			let first = bytes.length;
+			for (let n = 0; 6 * (n + 1) <= first; n++) {
+				const off = view.getUint32(n * 6);
+				const count = view.getInt16(n * 6 + 4);
+				if (count < 0) {
+					parts.push(bytes.slice(off, off - count * 32));
+					first = Math.min(first, off);
+				} else if (count > 0) {
+					const { out, start } = unpackBytekillerSpan(bytes.subarray(0, off));
+					if (out.length !== count * 32) {
+						throw new Error(`bank ${n} is ${out.length} bytes, not ${count * 32}`);
+					}
+					parts.push(out);
+					first = Math.min(first, start);
+				} else {
+					parts.push(new Uint8Array(0));
+				}
+			}
+			return parts;
+		}
 		default:
 			return null;
 	}
