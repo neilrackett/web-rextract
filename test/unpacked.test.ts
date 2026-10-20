@@ -63,7 +63,7 @@ describe('UNPACKED', () => {
 		const endA = 64 * 4 + pa.length;
 		const endB = endA + pb.length;
 		for (let room = 0; room < 64; room++) {
-			table.push(...be32(room === 0 ? endA : room < 5 ? endA : endB));
+			table.push(...be32(room < 5 ? endA : endB));
 		}
 		const parts = unpackedStreams('LEVEL1.LEV', concat(table, pa, pb));
 		expect(parts).toHaveLength(64);

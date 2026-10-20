@@ -42,28 +42,24 @@ export interface UnpackedSet {
 	failed: string[];
 }
 
-const be32 = (b: Uint8Array, at: number): number =>
-	new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(at);
-
-/** A length, then that many bytes of one packed stream. */
-const prefixed = (bytes: Uint8Array): Uint8Array[] => [unpackBytekiller(bytes.subarray(4, 4 + be32(bytes, 0)))];
-
 /**
  * The unpacked streams of one DATA file, or null for a file that has
  * no place in UNPACKED. Throws when a stream will not unpack.
  */
 export function unpackedStreams(name: string, bytes: Uint8Array): Uint8Array[] | null {
 	const ext = name.slice(name.lastIndexOf('.') + 1);
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+	// a length, then that many bytes of one packed stream
+	const prefixed = (): Uint8Array[] => [unpackBytekiller(bytes.subarray(4, 4 + view.getUint32(0)))];
 	if (name === 'PRESENT.CMP') {
 		// the title picture, loaded as one stream rather than as a scene
-		return prefixed(bytes);
+		return prefixed();
 	}
 	switch (ext) {
 		case 'CMP': {
 			// A cutscene: the polygons, then the commands, each behind a
 			// signed length - negative where the stream was stored as it
 			// is rather than packed.
-			const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 			const parts: Uint8Array[] = [];
 			let at = 0;
 			for (let i = 0; i < 2; i++) {
@@ -80,7 +76,7 @@ export function unpackedStreams(name: string, bytes: Uint8Array): Uint8Array[] |
 			return parts;
 		}
 		case 'OBC':
-			return prefixed(bytes);
+			return prefixed();
 		case 'SPM':
 		case 'SGD':
 		case 'CT':
@@ -92,7 +88,7 @@ export function unpackedStreams(name: string, bytes: Uint8Array): Uint8Array[] |
 			const parts: Uint8Array[] = [];
 			let prev = 64 * 4;
 			for (let room = 0; room < 64; room++) {
-				const end = be32(bytes, room * 4);
+				const end = view.getUint32(room * 4);
 				parts.push(end !== prev ? unpackBytekiller(bytes.subarray(0, end)) : new Uint8Array(0));
 				prev = end;
 			}
@@ -104,7 +100,6 @@ export function unpackedStreams(name: string, bytes: Uint8Array): Uint8Array[] |
 			// (the offset is then its start), positive where packed (the
 			// offset is where its stream ends), 0 for none. The table
 			// runs up to where the first bank begins.
-			const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 			const parts: Uint8Array[] = [];
 			let first = bytes.length;
 			for (let n = 0; 6 * (n + 1) <= first; n++) {
